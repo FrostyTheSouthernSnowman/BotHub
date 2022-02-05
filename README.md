@@ -33,6 +33,8 @@ Make sure `$GOPATH` environment variable are correctly setup
     $ echo $GOPATH
     $ /Users/macuser/Documents/gowork
 
+Some comments start with !, TODO, *, and other such symbols. The better comments VSCode extension can help the developer experience by coloring those comments in special ways.
+
 ### GO version
 
 At the time of writing, we are using `1.7.4` .
