@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body {
+        overflow: hidden;
+        margin: 0;
+      }
+
+      .ui {
+        position: absolute;
+      }
+
+      button{
+        margin: 20px;
+      }
+		</style>
+    <title>Document</title>
+</head>
+<body>
+  <script src="https://threejs.org/build/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+  <div style="width:100%;height:50px;text-align: center; color:white;" class="ui">Robot Simulator</div>
+  <button style="bottom:60%; right:15%" id="front" class="ui">Front</button>
+  <button style="bottom:55%; right:20%" id="left" class="ui">Left</button>
+  <button style="bottom:55%; right:10%" id="right" class="ui">Right</button>
+  <script>
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    var renderer = new THREE.WebGLRenderer();
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    var table_x_and_y = prompt("Specify the length of the table in X,Y format.");
+    var table_pos = table_x_and_y.split(",");
+    var table_x = table_pos[0];
+    var table_y = table_pos[1];
+
+    var robot_x_and_y = prompt("Where would you like to initialize the robot and where should it face? Please use the format X,Y,F where f is NORTH, EAST, SOUTH, or WEST.");
+    var robot_pos = robot_x_and_y.split(",");
+    var robot_x = robot_pos[0];
+    var robot_y = robot_pos[1];
+    var robot_f = robot_pos[2];
+
+    async function initRobot(table_x, table_y, robot_x, robot_y, robot_f) {
+      const data = {x: parseInt(table_x), y: parseInt(table_y)}
+
+      var response = await fetch("http://localhost/api/set-position", {method: 'POST', body: JSON.stringify(data)});
+      if (response.status = 200){
+        response = await fetch("http://localhost/api/place-robot", {method: 'POST', body: JSON.stringify({x: parseInt(robot_x), y: parseInt(robot_y), f: robot_f})})
+        return response;
+      }
+    }
+    initRobot(table_x, table_y, robot_x, robot_y, robot_f).then(response => response.json()).then(data => {
+      if (!data.f) {
+        return;
+      }
+      var geometry = new THREE.BoxGeometry(table_x, table_y, 0.01);
+      var material = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+      });
+      var floor = new THREE.Mesh(geometry, material);
+      scene.add(floor);
+
+      var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
+      var robot_material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+      });
+      var robot = new THREE.Mesh(robot_geometry, robot_material);
+      scene.add(robot);
+
+      camera.position.z = 5;
+      robot.position.z += 0.5;
+      robot.position.y = data.y;
+      robot.position.x = data.x;
+
+      var buttons = document.getElementsByTagName("button");
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].addEventListener("click", onButtonClick, false);
+      };
+
+      function onButtonClick(event) {
+        side = event.target.id;
+        side = side.toUpperCase();
+        if (side == "FRONT") {
+          side = "MOVE";
+        }
+        data = {command: side};
+        fetch("http://localhost/api/move-robot", {method: "POST", body: JSON.stringify(data)}).then(response => response.json()).then(data => {
+          robot.position.x = data.x;
+          robot.position.y = data.y;
+        })
+      }
+
+      var animate = function() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      };
+
+      animate();
+    })
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@ package robot
 
 import (
 	"fmt"
-	"strconv"
+	"math"
 	"strings"
 )
 
@@ -19,7 +19,7 @@ const (
 	errRobotNotPlaced  = "Robot is not placed on the table yet."
 	errRobotOverBoard  = "Command ignored, Robot will fall."
 	errMovementIgnored = "Invalid Movement so it is ignored."
-	errInvalidCmd      = "Sorry i dont get that!"
+	errInvalidCmd      = "Sorry i don't get that!"
 	errFailToInitiate  = "Failed to initiate"
 )
 
@@ -32,84 +32,86 @@ type Robot struct {
 }
 
 //Perform is to receive a command and perform the command
-func (r *Robot) Perform(cmd string) (string, error) {
+func (r *Robot) Perform(command string, x int, y int, f string) (int, int, string, error) {
 	var err error
-	command, x, y, f := parseCommand(cmd)
+	var rbot_x int
+	var rbot_y int
+	var rbot_f string
 	switch command {
 	case "PLACE":
-		err = r.Place(x, y, f)
+		rbot_x, rbot_y, rbot_f, err = r.Place(x, y, f)
 	case "MOVE":
-		err = r.Move()
+		rbot_x, rbot_y, rbot_f, err = r.Move()
 	case "LEFT":
-		err = r.Left()
+		rbot_x, rbot_y, rbot_f, err = r.Left()
 	case "RIGHT":
-		err = r.Right()
+		rbot_x, rbot_y, rbot_f, err = r.Right()
 	case "REPORT":
 		return r.Report()
 	default:
-		return "", fmt.Errorf(errInvalidCmd)
+		return 0, 0, "", fmt.Errorf(errInvalidCmd)
 	}
 	if err != nil {
-		return "", err
+		return 0, 0, "", err
 	}
-	return "Command Executed Successfully", nil
+	return rbot_x, rbot_y, rbot_f, nil
 }
 
 //Place will put the toy robot on the table in position X,Y and facing NORTH, SOUTH, EAST or WEST.
-func (r *Robot) Place(x int, y int, f string) error {
+func (r *Robot) Place(x int, y int, f string) (int, int, string, error) {
 	direction := strings.ToUpper(f)
 	//IF its not on the table
 	if !isStillOnTheTable(x, y, r.Table) {
-		return fmt.Errorf(errRobotOverBoard)
+		return 0, 0, "", fmt.Errorf(errRobotOverBoard)
 	}
 	if !isValidFacing(direction) {
-		return fmt.Errorf(errInvalidCmd)
+		return 0, 0, "", fmt.Errorf(errInvalidCmd)
 	}
 	r.X = x
 	r.Y = y
 	r.F = direction
 	r.IsRobotPlaced = true
-	return nil
+	return r.X, r.Y, r.F, nil
 }
 
 //Move will move the toy robot one unit forward in the direction it is currently facing.
-func (r *Robot) Move() error {
+func (r *Robot) Move() (int, int, string, error) {
 	if !r.IsRobotPlaced {
-		return fmt.Errorf(errRobotNotPlaced)
+		return 0, 0, "", fmt.Errorf(errRobotNotPlaced)
 	}
 	switch r.F {
 	case NORTH:
 		//IF after move and still in the table
 		if isStillOnTheTable(r.X, r.Y+1, r.Table) {
 			r.Y++
-			return nil
+			return r.X, r.Y, r.F, nil
 		}
 	case SOUTH:
 		//IF after move and still in the table
 		if isStillOnTheTable(r.X, r.Y-1, r.Table) {
 			r.Y--
-			return nil
+			return r.X, r.Y, r.F, nil
 		}
 	case EAST:
 		//IF after move and still in the table
 		if isStillOnTheTable(r.X+1, r.Y, r.Table) {
 			r.X++
-			return nil
+			return r.X, r.Y, r.F, nil
 		}
 	case WEST:
 		//IF after move and still in the table
 		if isStillOnTheTable(r.X-1, r.Y, r.Table) {
 			r.X--
-			return nil
+			return r.X, r.Y, r.F, nil
 		}
 	}
-	return fmt.Errorf(errMovementIgnored)
+	return 0, 0, "", fmt.Errorf(errMovementIgnored)
 }
 
 //Left will rotate the robot 90 degrees to left in the specified direction without changing the position of the robot.
-func (r *Robot) Left() error {
+func (r *Robot) Left() (int, int, string, error) {
 	if !r.IsRobotPlaced {
-		return fmt.Errorf(errRobotNotPlaced)
+		return 0, 0, "", fmt.Errorf(errRobotNotPlaced)
 	}
 	switch r.F {
 	case NORTH:
@@ -121,13 +123,13 @@ func (r *Robot) Left() error {
 	case WEST:
 		r.F = SOUTH
 	}
-	return nil
+	return r.X, r.Y, r.F, nil
 }
 
 //Right will rotate the robot 90 degrees to right in the specified direction without changing the position of the robot.
-func (r *Robot) Right() error {
+func (r *Robot) Right() (int, int, string, error) {
 	if !r.IsRobotPlaced {
-		return fmt.Errorf(errRobotNotPlaced)
+		return 0, 0, "", fmt.Errorf(errRobotNotPlaced)
 	}
 	switch r.F {
 	case NORTH:
@@ -139,15 +141,15 @@ func (r *Robot) Right() error {
 	case WEST:
 		r.F = NORTH
 	}
-	return nil
+	return r.X, r.Y, r.F, nil
 }
 
 //Report will announce the X,Y and F of the robot. This can be in any form, but standard output is sufficient
-func (r *Robot) Report() (string, error) {
+func (r *Robot) Report() (int, int, string, error) {
 	if !r.IsRobotPlaced {
-		return "", fmt.Errorf(errRobotNotPlaced)
+		return 0, 0, "", fmt.Errorf(errRobotNotPlaced)
 	}
-	return fmt.Sprintf("%d,%d,%s", r.X, r.Y, r.F), nil
+	return r.X, r.Y, r.F, nil
 }
 
 //NewRobot is to instantiate a new robot object
@@ -162,26 +164,9 @@ func NewRobot(tableWidth int, tableLength int) (Robot, error) {
 //private methods
 
 func isStillOnTheTable(x int, y int, table Table) bool {
-	return x < table.Width && x >= 0 && y < table.Length && y >= 0
+	return int(math.Abs(float64(x))) < table.Width/2 && int(math.Abs(float64(y))) < table.Length/2
 }
 
 func isValidFacing(f string) bool {
 	return f == NORTH || f == SOUTH || f == EAST || f == WEST
-}
-
-func parseCommand(line string) (string, int, int, string) {
-	var f, command string
-	var x, y int
-	var args []string
-	commands := strings.Split(strings.ToUpper(line), " ")
-	command = commands[0]
-	if len(commands) == 2 {
-		args = strings.Split(commands[1], ",")
-	}
-	if len(args) == 3 {
-		x, _ = strconv.Atoi(args[0])
-		y, _ = strconv.Atoi(args[1])
-		f = args[2]
-	}
-	return command, x, y, f
 }
