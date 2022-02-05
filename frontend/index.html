@@ -65,14 +65,14 @@
       }
       var geometry = new THREE.BoxGeometry(table_x, table_y, 0.01);
       var material = new THREE.MeshBasicMaterial({
-        color: 0x00ff00,
+        color: "grey",
       });
       var floor = new THREE.Mesh(geometry, material);
       scene.add(floor);
 
       var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
       var robot_material = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
+        color: "orange",
       });
       var robot = new THREE.Mesh(robot_geometry, robot_material);
       scene.add(robot);
