@@ -8,11 +8,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"robot-simulator/robot"
+	"robot-simulator/robot/physics"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{} // use default options
 
 var sim_robot robot.Robot
 
@@ -21,16 +26,16 @@ type Command struct {
 }
 
 type XYPosition struct {
-	X int    `json:"x"`
-	Y int    `json:"y"`
-	F string `json:"f"`
+	X float32 `json:"x"`
+	Y float32 `json:"y"`
+	F string  `json:"f"`
 }
 
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/set-position", SetPositionHandler).Methods("POST")
-	r.HandleFunc("/api/move-robot", MoveRobotHandler).Methods("POST")
 	r.HandleFunc("/api/place-robot", PlaceRobotHandler).Methods("POST")
+	r.HandleFunc("/api/stream-simulation", StreamHandler).Methods("GET")
 
 	staticFileDirectory := http.Dir("./frontend/")
 	// Declare the handler, that routes requests to their respective filename.
@@ -53,7 +58,9 @@ func StartServer() {
 	//Handle all the available flags
 	//fileName := flag.String("f", "", "A file name to be executed.")
 
+	fmt.Println("Starting server")
 	r := NewRouter()
+	fmt.Println("Server started on port 80")
 	http.ListenAndServe(":80", r)
 }
 
@@ -61,6 +68,7 @@ func SetPositionHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var x_and_y XYPosition
 	err := decoder.Decode(&x_and_y)
+	check(err, "decoding in SetPositionHandler")
 	//initialize table & robot
 	rbot, err := robot.NewRobot(x_and_y.X, x_and_y.Y)
 	if err != nil {
@@ -72,39 +80,52 @@ func SetPositionHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
 }
 
-func MoveRobotHandler(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var robot_pos XYPosition
-	var command Command
-	err := decoder.Decode(&command)
-	check(err)
-	robot_pos.X, robot_pos.Y, robot_pos.F, err = sim_robot.Perform(command.Commamd, 0, 0, "")
-	if !check(err) {
-		robot_bytes, err := json.Marshal(robot_pos)
-		if !check(err) {
-			w.Write(robot_bytes)
-		}
-	}
-}
-
 func PlaceRobotHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var robot_pos XYPosition
 	err := decoder.Decode(&robot_pos)
-	check(err)
+	check(err, "decode json in PlaceRobotHandler")
 	robot_pos.X, robot_pos.Y, robot_pos.F, err = sim_robot.Perform("PLACE", robot_pos.X, robot_pos.Y, robot_pos.F)
-	if !check(err) {
+	if !check(err, "can't place robot") {
 		robot_bytes, err := json.Marshal(robot_pos)
-		if !check(err) {
+		if !check(err, "error marshalling bytes") {
 			w.Write(robot_bytes)
 		}
 	}
 }
 
-func check(err error) bool {
+func StreamHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println(err.Error())
-		return true
+		fmt.Println("upgrade:", err)
+		return
 	}
-	return false
+	defer c.Close()
+
+	sim_robot.Position = physics.XYZPosition{X: sim_robot.Position.X, Y: sim_robot.Position.Y, Z: 1.00}
+
+	for {
+		sim, _ := physics.CalculatePhysics([]physics.XYZPosition{sim_robot.Position})
+		sim_robot.Position = sim[0]
+
+		sim_json, err := json.Marshal(sim)
+		check(err, "marshall json")
+
+		// Main loop, send new data to the frontend
+		err = c.WriteMessage(websocket.TextMessage, sim_json)
+		if err != nil {
+			fmt.Println("error:", err)
+			break
+		}
+		time.Sleep(time.Duration(physics.CalculationsPerSecond))
+	}
+}
+
+func check(err error, name string) bool {
+	if err != nil {
+		fmt.Println(name, ": ", err.Error())
+		return true
+	} else {
+		return false
+	}
 }

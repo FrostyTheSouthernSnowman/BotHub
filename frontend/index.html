@@ -25,9 +25,9 @@
   <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
   <div style="width:100%;height:50px;text-align: center; color:white;" class="ui">Robot Simulator</div>
-  <button style="bottom:60%; right:15%" id="front" class="ui">Front</button>
+  <!--button style="bottom:60%; right:15%" id="front" class="ui">Front</-button>
   <button style="bottom:55%; right:20%" id="left" class="ui">Left</button>
-  <button style="bottom:55%; right:10%" id="right" class="ui">Right</button>
+  <button-- style="bottom:55%; right:10%" id="right" class="ui">Right</button-->
   <script>
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -77,27 +77,19 @@
       var robot = new THREE.Mesh(robot_geometry, robot_material);
       scene.add(robot);
 
+      camera.position.y = -5;
       camera.position.z = 5;
       robot.position.z += 0.5;
       robot.position.y = data.y;
       robot.position.x = data.x;
 
-      var buttons = document.getElementsByTagName("button");
-      for (let i = 0; i < buttons.length; i++) {
-        buttons[i].addEventListener("click", onButtonClick, false);
-      };
+      var streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
 
-      function onButtonClick(event) {
-        side = event.target.id;
-        side = side.toUpperCase();
-        if (side == "FRONT") {
-          side = "MOVE";
-        }
-        data = {command: side};
-        fetch("http://localhost/api/move-robot", {method: "POST", body: JSON.stringify(data)}).then(response => response.json()).then(data => {
-          robot.position.x = data.x;
-          robot.position.y = data.y;
-        })
+      streamSocket.onmessage = function (event) {
+        bot = JSON.parse(event.data)[0];
+        robot.position.x = bot.X;
+        robot.position.y = bot.Y;
+        robot.position.z = bot.Z+0.5;
       }
 
       var animate = function() {
