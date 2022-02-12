@@ -39,12 +39,12 @@ var _ = Describe("Robot", func() {
 		})
 
 		Context("with valid param", func() {
-			_, _, _, err := robot.Perform("PLACE", 1, 2, "NORTH")
+			x, y, f, err := robot.Perform("PLACE", 1, 2, "NORTH")
 			It("should return no error", func() {
 				Expect(err == nil).To(Equal(true))
-				Expect(robot.X == 1).To(Equal(true))
-				Expect(robot.Y == 2).To(Equal(true))
-				Expect(robot.F == "NORTH").To(Equal(true))
+				Expect(x == 1).To(Equal(true))
+				Expect(y == 2).To(Equal(true))
+				Expect(f == "NORTH").To(Equal(true))
 			})
 		})
 	})
@@ -92,12 +92,12 @@ var _ = Describe("Robot", func() {
 		Describe("with valid move", func() {
 			Context("when facing north", func() {
 				robot := placeRobot(0, 3, "NORTH")
-				_, _, _, err := robot.Perform("MOVE", 0, 0, "")
+				x, y, f, err := robot.Perform("MOVE", 0, 0, "")
 				It("should be successful", func() {
 					Expect(err == nil).To(Equal(true))
-					Expect(robot.X == 0).To(Equal(true))
-					Expect(robot.Y == 4).To(Equal(true))
-					Expect(robot.F == "NORTH").To(Equal(true))
+					Expect(x == 0).To(Equal(true))
+					Expect(y == 4).To(Equal(true))
+					Expect(f == "NORTH").To(Equal(true))
 				})
 			})
 
@@ -114,12 +114,12 @@ var _ = Describe("Robot", func() {
 
 			Context("when facing east", func() {
 				robot := placeRobot(3, 0, "EAST")
-				_, _, _, err := robot.Perform("MOVE", 0, 0, "")
+				x, y, f, err := robot.Perform("MOVE", 0, 0, "")
 				It("should be successful", func() {
 					Expect(err == nil).To(Equal(true))
-					Expect(robot.X == 4).To(Equal(true))
-					Expect(robot.Y == 0).To(Equal(true))
-					Expect(robot.F == "EAST").To(Equal(true))
+					Expect(x == 4).To(Equal(true))
+					Expect(y == 0).To(Equal(true))
+					Expect(f == "EAST").To(Equal(true))
 				})
 			})
 
@@ -267,7 +267,7 @@ var _ = Describe("Robot", func() {
 	})
 })
 
-func placeRobot(x int, y int, f string) Robot {
+func placeRobot(x float32, y float32, f string) Robot {
 	robot := initialiseRobot()
 	robot.Place(x, y, f)
 	return robot

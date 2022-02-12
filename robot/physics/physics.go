@@ -7,8 +7,8 @@ func CalculatePhysics(simulation []XYZPosition) ([]XYZPosition, error) {
 			value, _ = AddGravity(value)
 		}
 		value.Z += value.Velocity.Z
-		if value.Z < 0 {
-			value.Z = 0
+		if value.Z < 0.5 {
+			value.Z = 0.5
 		}
 		value.Y += value.Velocity.Y
 		value.X += value.Velocity.X
