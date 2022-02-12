@@ -71,6 +71,7 @@ func (r *Robot) Place(x float32, y float32, f string) (float32, float32, string,
 	}
 	r.Position.X = float32(x)
 	r.Position.Y = float32(y)
+	r.Position.Z = 5.0
 	r.F = direction
 	r.IsRobotPlaced = true
 	return r.Position.X, r.Position.Y, r.F, nil
