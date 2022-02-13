@@ -48,12 +48,21 @@
       }
 
       #overlay-top {
-        background-color: #ffffff;
+        background-color: #4e4e4e;
         width: 70%;
-        height: 50px;
+        height: 5%;
         position: absolute;
         top: 0;
         left: 15%;
+      }
+
+      #play-button {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
       }
 		</style>
     <title>FreeBots Robot Simulator</title>
@@ -76,7 +85,7 @@
   </div>
 
   <div id="overlay-top">
-    <button onclick="playSimulation()">
+    <button id="play-button" onclick="playSimulation()">
       <span class="material-icons">play_arrow</span>
     </button>
   </div>
@@ -84,6 +93,108 @@
   <button style="bottom:55%; right:20%" id="left" class="ui">Left</button>
   <button-- style="bottom:55%; right:10%" id="right" class="ui">Right</button-->
   <script>
+    // Resize stuff
+    var topDiv = document.getElementById('overlay-top');
+    var topDivResizer = document.createElement('div');
+    topDivResizer.className = 'resizer';
+    topDivResizer.style.width = '100%';
+    topDivResizer.style.height = '2%';
+    topDivResizer.style.background = '#4e4e4e';
+    topDivResizer.style.position = 'absolute';
+    topDivResizer.style.right = 0;
+    topDivResizer.style.bottom = 0;
+    topDivResizer.style.cursor = 'se-resize';
+    topDiv.appendChild(topDivResizer);
+    topDivResizer.addEventListener('mousedown', initTopResize, false);
+
+    function initTopResize(e) {
+      window.addEventListener('mousemove', topResize, false);
+      window.addEventListener('mouseup', stopTopResize, false);
+    }
+    function topResize(e) {
+      topDiv.style.height = (e.clientY - topDiv.offsetTop) + 'px';
+    }
+    function stopTopResize(e) {
+        window.removeEventListener('mousemove', topResize, false);
+        window.removeEventListener('mouseup', stopTopResize, false);
+    }
+    
+    var bottomDiv = document.getElementById('overlay-bottom');
+    var bottomDivResizer = document.createElement('div');
+    bottomDivResizer.className = 'resizer';
+    bottomDivResizer.style.width = '100%';
+    bottomDivResizer.style.height = '2%';
+    bottomDivResizer.style.background = '#ffff00';
+    bottomDivResizer.style.position = 'absolute';
+    bottomDivResizer.style.right = 0;
+    bottomDivResizer.style.top = 0;
+    bottomDivResizer.style.cursor = 'se-resize';
+    bottomDiv.appendChild(bottomDivResizer);
+    bottomDivResizer.addEventListener('mousedown', initBottomResize, false);
+
+    function initBottomResize(e) {
+      window.addEventListener('mousemove', bottomResize, false);
+      window.addEventListener('mouseup', stopBottomResize, false);
+    }
+    function bottomResize(e) {
+      bottomDiv.style.height = (window.innerHeight - e.clientY) + 'px';
+    }
+    function stopBottomResize(e) {
+        window.removeEventListener('mousemove', bottomResize, false);
+        window.removeEventListener('mouseup', stopBottomResize, false);
+    }
+
+    var rightDiv = document.getElementById('overlay-right');
+    var rightDivResizer = document.createElement('div');
+    rightDivResizer.className = 'resizer';
+    rightDivResizer.style.width = '2%';
+    rightDivResizer.style.height = '100%';
+    rightDivResizer.style.background = '#00ff00';
+    rightDivResizer.style.position = 'absolute';
+    rightDivResizer.style.left = 0;
+    rightDivResizer.style.bottom = 0;
+    rightDivResizer.style.cursor = 'se-resize';
+    rightDiv.appendChild(rightDivResizer);
+    rightDivResizer.addEventListener('mousedown', initRightResize, false);
+
+    function initRightResize(e) {
+      window.addEventListener('mousemove', rightResize, false);
+      window.addEventListener('mouseup', stopRightResize, false);
+    }
+    function rightResize(e) {
+      rightDiv.style.width = (window.innerWidth - e.clientX) + 'px';
+    }
+    function stopRightResize(e) {
+        window.removeEventListener('mousemove', rightResize, false);
+        window.removeEventListener('mouseup', stopRightResize, false);
+    }
+
+    var leftDiv = document.getElementById('overlay-left');
+    var leftDivResizer = document.createElement('div');
+    leftDivResizer.className = 'resizer';
+    leftDivResizer.style.width = '2%';
+    leftDivResizer.style.height = '100%';
+    leftDivResizer.style.background = '#ff0000';
+    leftDivResizer.style.position = 'absolute';
+    leftDivResizer.style.right = 0;
+    leftDivResizer.style.bottom = 0;
+    leftDivResizer.style.cursor = 'se-resize';
+    leftDiv.appendChild(leftDivResizer);
+    leftDivResizer.addEventListener('mousedown', initLeftResize, false);
+
+    function initLeftResize(e) {
+      window.addEventListener('mousemove', leftResize, false);
+      window.addEventListener('mouseup', stopLeftResize, false);
+    }
+    function leftResize(e) {
+      leftDiv.style.width = (e.clientX - leftDiv.offsetLeft) + 'px';
+    }
+    function stopLeftResize(e) {
+        window.removeEventListener('mousemove', leftResize, false);
+        window.removeEventListener('mouseup', stopLeftResize, false);
+    }
+
+    // Three-js stuff
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
