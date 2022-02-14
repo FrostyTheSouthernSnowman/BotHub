@@ -1,10 +1,6 @@
 package web
 
 import (
-	// "fmt" has methods for formatted I/O operations (like printing to the console)
-
-	// The "net/http" library has methods to implement HTTP clients and servers
-
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,8 +17,14 @@ var upgrader = websocket.Upgrader{} // use default options
 
 var sim_robot robot.Robot
 
+var messages []Message = []Message{{}}
+
 type Command struct {
 	Commamd string `json:"command"`
+}
+
+type Message struct {
+	Type string `json:"type"`
 }
 
 type XYPosition struct {
@@ -94,6 +96,17 @@ func PlaceRobotHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ReadDataGorutine(c *websocket.Conn) {
+	for {
+		var message Message
+		err := c.ReadJSON(&message)
+		if err != nil {
+			break
+		}
+		messages[0] = message
+	}
+}
+
 func StreamHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -102,9 +115,54 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
-	sim_robot.Position = physics.XYZPosition{X: sim_robot.Position.X, Y: sim_robot.Position.Y, Z: 1.00}
+	sim_robot.Position = physics.XYZPosition{
+		X:         sim_robot.Position.X,
+		Y:         sim_robot.Position.Y,
+		Z:         1.00,
+		XRotation: 0,
+		YRotation: 0,
+		ZRotation: 0,
+		Velocity: physics.Vector3{
+			X: 0,
+			Y: 0,
+			Z: 0,
+		},
+	}
+	var initial_state []robot.Robot = []robot.Robot{sim_robot}
+
+	go ReadDataGorutine(c)
 
 	for {
+		// Determine if pause, play, or reset is necessary
+		if messages[0].Type != "" {
+			switch messages[0].Type {
+			case "pause":
+				time.Sleep(time.Duration(time.Duration(time.Second / time.Duration((physics.CalculationsPerSecond)))))
+				continue
+
+			case "reset":
+				sim_robot.Position = initial_state[0].Position
+				messages[0].Type = "pause"
+
+				sim_json, err := json.Marshal([]physics.XYZPosition{initial_state[0].Position})
+				check(err, "marshall json")
+
+				// Main loop, send new data to the frontend
+				err = c.WriteMessage(websocket.TextMessage, sim_json)
+				if err != nil {
+					fmt.Println("error:", err)
+					break
+				}
+				time.Sleep(time.Duration(time.Duration(time.Second / time.Duration((physics.CalculationsPerSecond)))))
+				continue
+
+			case "play":
+				messages[0].Type = ""
+				time.Sleep(time.Duration(time.Duration(time.Second / time.Duration((physics.CalculationsPerSecond)))))
+				continue
+			}
+		}
+
 		sim, _ := physics.CalculatePhysics([]physics.XYZPosition{sim_robot.Position})
 		sim_robot.Position = sim[0]
 
@@ -117,7 +175,7 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("error:", err)
 			break
 		}
-		time.Sleep(time.Duration(physics.CalculationsPerSecond))
+		time.Sleep(time.Duration(time.Duration(time.Second / time.Duration((physics.CalculationsPerSecond)))))
 	}
 }
 

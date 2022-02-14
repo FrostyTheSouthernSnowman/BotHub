@@ -60,9 +60,27 @@
         margin: 0;
         position: absolute;
         top: 50%;
+        left: 46%;
+        -ms-transform: translate(-48%, -50%);
+        transform: translate(-48%, -50%);
+      }
+      
+      #pause-button {
+        margin: 0;
+        position: absolute;
+        top: 50%;
         left: 50%;
-        -ms-transform: translate(-50%, -50%);
-        transform: translate(-50%, -50%);
+        -ms-transform: translate(-52%, -50%);
+        transform: translate(-52%, -50%);
+      }
+      
+      #reset-button {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 54%;
+        -ms-transform: translate(-52%, -50%);
+        transform: translate(-52%, -50%);
       }
 		</style>
     <title>FreeBots Robot Simulator</title>
@@ -87,6 +105,12 @@
   <div id="overlay-top">
     <button id="play-button" onclick="playSimulation()">
       <span class="material-icons">play_arrow</span>
+    </button>
+    <button id="pause-button" onclick="pauseSimulation()">
+      <span class="material-icons">pause</span>
+    </button>
+    <button id="reset-button" onclick="resetSimulation()">
+      <span class="material-icons">undo</span>
     </button>
   </div>
   <!--button style="bottom:60%; right:15%" id="front" class="ui">Front</-button>
@@ -124,7 +148,7 @@
     bottomDivResizer.className = 'resizer';
     bottomDivResizer.style.width = '100%';
     bottomDivResizer.style.height = '2%';
-    bottomDivResizer.style.background = '#ffff00';
+    bottomDivResizer.style.background = '#0000ff';
     bottomDivResizer.style.position = 'absolute';
     bottomDivResizer.style.right = 0;
     bottomDivResizer.style.top = 0;
@@ -218,14 +242,29 @@
     
     var robot;
 
-    function playSimulation() {
-      var streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
+    var streamSocket
 
-      streamSocket.onmessage = function (event) {
-        bot = JSON.parse(event.data)[0];
-        robot.position.x = bot.X;
-        robot.position.y = bot.Y;
-        robot.position.z = bot.Z;
+    function pauseSimulation() {
+      streamSocket.send(JSON.stringify({type: "pause"}))
+    }
+
+    function resetSimulation() {
+      streamSocket.send(JSON.stringify({type: "reset"}))
+    }
+
+    function playSimulation() {
+      if (streamSocket == undefined) {
+        streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
+
+        streamSocket.onmessage = function (event) {
+          bot = JSON.parse(event.data)[0];
+          console.log(bot)
+          robot.position.x = bot.X;
+          robot.position.y = bot.Y;
+          robot.position.z = bot.Z;
+        }
+      } else {
+        streamSocket.send(JSON.stringify({type: "play"}))
       }
     }
 
@@ -260,7 +299,7 @@
       camera.position.z = 2;
       camera.position.x = 0;
       camera.rotation.x = 1;
-      robot.position.z = 5.5;
+      robot.position.z = 1.00;
       robot.position.y = data.y;
       robot.position.x = data.x; 
 
