@@ -78,8 +78,8 @@ func SetPositionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sim_robot = rbot
-	// For this case, we will always pipe "Hello World" into the response writer
-	fmt.Fprintf(w, "Hello World!")
+
+	fmt.Fprintf(w, "{\"errors\": \"false\"}")
 }
 
 func PlaceRobotHandler(w http.ResponseWriter, r *http.Request) {

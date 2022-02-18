@@ -1,0 +1,84 @@
+body {
+overflow: hidden;
+margin: 0;
+}
+
+.ui {
+position: absolute;
+}
+
+button{
+margin: 20px;
+}
+
+#overlay-left {
+background-color: #ff0000;
+width: 15%;
+height: 100%;
+position: absolute;
+top: 0;
+left: 0;
+}
+
+#overlay-right {
+background-color: #00ff00;
+width: 15%;
+height: 100%;
+position: absolute;
+top: 0;
+right: 0;
+}
+
+#overlay-bottom {
+background-color: #0000ff;
+width: 70%;
+height: 50px;
+position: absolute;
+bottom: 0;
+left: 15%;
+}
+
+#overlay-top {
+background-color: #4e4e4e;
+width: 70%;
+height: 5%;
+position: absolute;
+top: 0;
+left: 15%;
+}
+
+#play-button {
+margin: 0;
+position: absolute;
+top: 50%;
+left: 46%;
+-ms-transform: translate(-48%, -50%);
+transform: translate(-48%, -50%);
+}
+
+#pause-button {
+margin: 0;
+position: absolute;
+top: 50%;
+left: 50%;
+-ms-transform: translate(-52%, -50%);
+transform: translate(-52%, -50%);
+}
+
+#reset-button {
+margin: 0;
+position: absolute;
+top: 50%;
+left: 54%;
+-ms-transform: translate(-52%, -50%);
+transform: translate(-52%, -50%);
+}
+
+#add-button {
+margin: 0;
+position: absolute;
+top: 50%;
+left: 5%;
+-ms-transform: translate(-5%, -50%);
+transform: translate(-5%, -50%);
+}
