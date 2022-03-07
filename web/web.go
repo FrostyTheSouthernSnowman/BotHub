@@ -15,7 +15,7 @@ import (
 
 var upgrader = websocket.Upgrader{} // use default options
 
-var sim_robot robot.Robot
+var sim_robots []robot.Robot
 
 var messages []Message = []Message{{}}
 
@@ -38,8 +38,9 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/set-position", SetPositionHandler).Methods("POST")
 	r.HandleFunc("/api/place-robot", PlaceRobotHandler).Methods("POST")
 	r.HandleFunc("/api/stream-simulation", StreamHandler).Methods("GET")
+	r.HandleFunc("/api/add-robot", AddRobotHandler).Methods("POST")
 
-	staticFileDirectory := http.Dir("./frontend/")
+	staticFileDirectory := http.Dir("./frontend/built")
 	// Declare the handler, that routes requests to their respective filename.
 	// The fileserver is wrapped in the `stripPrefix` method, because we want to
 	// remove the "/assets/" prefix when looking for files.
@@ -77,7 +78,7 @@ func SetPositionHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	sim_robot = rbot
+	sim_robots = []robot.Robot{rbot}
 
 	fmt.Fprintf(w, "{\"errors\": \"false\"}")
 }
@@ -87,9 +88,44 @@ func PlaceRobotHandler(w http.ResponseWriter, r *http.Request) {
 	var robot_pos XYPosition
 	err := decoder.Decode(&robot_pos)
 	check(err, "decode json in PlaceRobotHandler")
-	robot_pos.X, robot_pos.Y, robot_pos.F, err = sim_robot.Perform("PLACE", robot_pos.X, robot_pos.Y, robot_pos.F)
+	robot_pos.X, robot_pos.Y, robot_pos.F, err = sim_robots[0].Perform("PLACE", robot_pos.X, robot_pos.Y, 5.00, robot_pos.F)
 	if !check(err, "can't place robot") {
 		robot_bytes, err := json.Marshal(robot_pos)
+		if !check(err, "error marshalling bytes") {
+			w.Write(robot_bytes)
+		}
+	}
+}
+
+func AddRobotHandler(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var new_robot_pos physics.Vector3
+	err := decoder.Decode(&new_robot_pos)
+	check(err, "decode robot position json in AddRobotHandler")
+	rbot := robot.Robot{
+		Position: physics.XYZPosition{
+			X:         new_robot_pos.X,
+			Y:         new_robot_pos.Y,
+			Z:         new_robot_pos.Z,
+			XRotation: 0,
+			YRotation: 0,
+			ZRotation: 0,
+			Velocity: physics.Vector3{
+				X: 0,
+				Y: 0,
+				Z: 0,
+			},
+		},
+		X:             int(new_robot_pos.X),
+		Y:             int(new_robot_pos.Y),
+		F:             "EAST", //! This is temporary, eventually f will be deprecated because it serves no purpose. f should be replaced by a quaternion for orientation.
+		IsRobotPlaced: true,
+		Table:         sim_robots[0].Table,
+	}
+	sim_robots = append(sim_robots, rbot)
+	new_robot_pos.X, new_robot_pos.Y, _, err = sim_robots[len(sim_robots)-1].Perform("PLACE", new_robot_pos.X, new_robot_pos.Y, new_robot_pos.Z, "EAST")
+	if !check(err, "can't place robot") {
+		robot_bytes, err := json.Marshal(new_robot_pos)
 		if !check(err, "error marshalling bytes") {
 			w.Write(robot_bytes)
 		}
@@ -115,9 +151,9 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
-	sim_robot.Position = physics.XYZPosition{
-		X:         sim_robot.Position.X,
-		Y:         sim_robot.Position.Y,
+	sim_robots[0].Position = physics.XYZPosition{
+		X:         sim_robots[0].Position.X,
+		Y:         sim_robots[0].Position.Y,
 		Z:         1.00,
 		XRotation: 0,
 		YRotation: 0,
@@ -128,7 +164,7 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 			Z: 0,
 		},
 	}
-	var initial_state []robot.Robot = []robot.Robot{sim_robot}
+	var initial_state []robot.Robot = sim_robots
 
 	go ReadDataGorutine(c)
 
@@ -141,7 +177,7 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 
 			case "reset":
-				sim_robot.Position = initial_state[0].Position
+				sim_robots[0].Position = initial_state[0].Position
 				messages[0].Type = "pause"
 
 				sim_json, err := json.Marshal([]physics.XYZPosition{initial_state[0].Position})
@@ -163,13 +199,13 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		sim, _ := physics.CalculatePhysics([]physics.XYZPosition{sim_robot.Position})
-		sim_robot.Position = sim[0]
+		sim, _ := physics.CalculatePhysics([]physics.XYZPosition{sim_robots[0].Position})
+		sim_robots[0].Position = sim[0]
 
 		sim_json, err := json.Marshal(sim)
 		check(err, "marshall json")
 
-		// Main loop, send new data to the frontend
+		// Send new data to the frontend
 		err = c.WriteMessage(websocket.TextMessage, sim_json)
 		if err != nil {
 			fmt.Println("error:", err)

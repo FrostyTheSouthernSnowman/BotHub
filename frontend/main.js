@@ -6,8 +6,8 @@ topDivResizer.style.width = '100%';
 topDivResizer.style.height = '2%';
 topDivResizer.style.background = '#4e4e4e';
 topDivResizer.style.position = 'absolute';
-topDivResizer.style.right = 0;
-topDivResizer.style.bottom = 0;
+topDivResizer.style.right = "0";
+topDivResizer.style.bottom = "0";
 topDivResizer.style.cursor = 'se-resize';
 topDiv.appendChild(topDivResizer);
 topDivResizer.addEventListener('mousedown', initTopResize, false);
@@ -31,8 +31,8 @@ bottomDivResizer.style.width = '100%';
 bottomDivResizer.style.height = '2%';
 bottomDivResizer.style.background = '#0000ff';
 bottomDivResizer.style.position = 'absolute';
-bottomDivResizer.style.right = 0;
-bottomDivResizer.style.top = 0;
+bottomDivResizer.style.right = "0";
+bottomDivResizer.style.top = "0";
 bottomDivResizer.style.cursor = 'se-resize';
 bottomDiv.appendChild(bottomDivResizer);
 bottomDivResizer.addEventListener('mousedown', initBottomResize, false);
@@ -56,8 +56,8 @@ rightDivResizer.style.width = '2%';
 rightDivResizer.style.height = '100%';
 rightDivResizer.style.background = '#00ff00';
 rightDivResizer.style.position = 'absolute';
-rightDivResizer.style.left = 0;
-rightDivResizer.style.bottom = 0;
+rightDivResizer.style.left = "0";
+rightDivResizer.style.bottom = "0";
 rightDivResizer.style.cursor = 'se-resize';
 rightDiv.appendChild(rightDivResizer);
 rightDivResizer.addEventListener('mousedown', initRightResize, false);
@@ -81,8 +81,8 @@ leftDivResizer.style.width = '2%';
 leftDivResizer.style.height = '100%';
 leftDivResizer.style.background = '#ff0000';
 leftDivResizer.style.position = 'absolute';
-leftDivResizer.style.right = 0;
-leftDivResizer.style.bottom = 0;
+leftDivResizer.style.right = "0";
+leftDivResizer.style.bottom = "0";
 leftDivResizer.style.cursor = 'se-resize';
 leftDiv.appendChild(leftDivResizer);
 leftDivResizer.addEventListener('mousedown', initLeftResize, false);
@@ -105,7 +105,43 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 
 var renderer = new THREE.WebGLRenderer();
 
+
+// Drag robot stuff
+var directionOfDrag = false;
+
+var stuffToDrag = [];
+
+var arrowHeight = 0;
+
+var intersection = null;
+
+function initDragRobotAlongAxis() {
+    window.addEventListener('mousemove', dragRobotAlongAxis, false);
+    window.addEventListener('mouseup', stopDragRobotAlongAxis, false);
+}
+function dragRobotAlongAxis(e) {
+    if (directionOfDrag = "z") {
+        for (let i in stuffToDrag) {
+            stuffToDrag[i].position.copy(intersection.sub(new THREE.Vector3()).applyMatrix4(new THREE.Matrix4()));
+            console.log(e);
+        }
+    } else if (directionOfDrag = "y") {
+        for (let i in stuffToDrag) {
+            stuffToDrag[i].position.y = ((e.clientX / window.innerWidth) * 2 - 1) - arrowHeight;
+        }
+    } else if (directionOfDrag = "x") {
+        for (let i in stuffToDrag) {
+            stuffToDrag[i].position.x = ((e.clientX / window.innerWidth) * 2 - 1) - arrowHeight;
+        }
+    }
+}
+function stopDragRobotAlongAxis(e) {
+    window.removeEventListener('mousemove', dragRobotAlongAxis, false);
+    window.removeEventListener('mouseup', stopDragRobotAlongAxis, false);
+}
+
 var raycaster, mouse = { x: 0, y: 0 };
+
 
 function raycast(e) {
     // Step 1: Detect light helper
@@ -124,13 +160,31 @@ function raycast(e) {
         var intersect = intersects[i]
         var object = intersect.object
         if (object.position.x == 0 && object.position.y == 0 && object.position.z == 0) { continue; }
-        if (object.position.y == 1.7320508075688772) {
-            console.log(e)
+
+        //TODO: if_arrow_give_name_or_return_false if a temporary proof-of-concept placeholder function.
+        //Todo: Refactor method to return so sort of direction or vector instead of string. 
+        //TODO: vector would make it simpler to process the drag-and-drop controls
+        directionOfDrag = if_arrow_give_name_or_return_false(object)
+        if (directionOfDrag !== false) {
+            stuffToDrag = []
+            // Get all object at the same position
+            for (let i in objects) {
+                if (objects[i].position.x === object.parent.position.x && objects[i].position.y === object.parent.position.y && objects[i].position.z === object.parent.position.z) {
+                    stuffToDrag.push(objects[i])
+                }
+            }
+            // Move all objects to mouse's location minus arrow length
+            arrowHeight = object.parent.line.scale.y + object.parent.cone.position.y
+
+            intersection = intersect
+
+            initDragRobotAlongAxis()
+
+            continue
         }
 
         var x_arrow = scene.getObjectByName("x_arrow")
         if (x_arrow != undefined) {
-            console.log(x_arrow.position)
             var y_arrow = scene.getObjectByName("y_arrow")
             var z_arrow = scene.getObjectByName("z_arrow")
             scene.remove(x_arrow)
@@ -158,9 +212,12 @@ function raycast(e) {
         x_arrowHelper.name = "x_arrow"
         y_arrowHelper.name = "y_arrow"
         z_arrowHelper.name = "z_arrow"
-        z_arrowHelper.position.x = object.position.x
-        z_arrowHelper.position.y = object.position.y
+        x_arrowHelper.position.x = object.position.x
+        y_arrowHelper.position.y = object.position.y
         z_arrowHelper.position.z = object.position.z
+        objects.push(x_arrowHelper)
+        objects.push(y_arrowHelper)
+        objects.push(z_arrowHelper)
         scene.add(x_arrowHelper);
         scene.add(y_arrowHelper);
         scene.add(z_arrowHelper);
@@ -210,6 +267,7 @@ var robot_x = robot_pos[0];
 var robot_y = robot_pos[1];
 var robot_f = robot_pos[2];
 
+var objects = []
 var robots = [];
 var robot;
 
@@ -229,8 +287,7 @@ function playSimulation() {
         streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
 
         streamSocket.onmessage = function (event) {
-            bot = JSON.parse(event.data)[0];
-            console.log(bot)
+            let bot = JSON.parse(event.data)[0];
             robot.position.x = bot.X;
             robot.position.y = bot.Y;
             robot.position.z = bot.Z;
@@ -240,7 +297,7 @@ function playSimulation() {
     }
 }
 
-function addRobot() {
+async function addRobot() {
     var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
     var robot_material = new THREE.MeshBasicMaterial({
         color: "orange",
@@ -248,14 +305,16 @@ function addRobot() {
     var robot = new THREE.Mesh(robot_geometry, robot_material);
     robot.position.z = 0.5;
     robots.push(robot);
+    objects.push(robot)
     scene.add(robot);
+    var response = await fetch("http://localhost/api/add-robot", { method: 'POST', body: JSON.stringify(robot.position) })
 }
 
 async function initRobot(table_x, table_y, robot_x, robot_y, robot_f) {
     const data = { x: parseInt(table_x), y: parseInt(table_y) }
 
     var response = await fetch("http://localhost/api/set-position", { method: 'POST', body: JSON.stringify(data) });
-    if (response.status = 200) {
+    if (response.status == 200) {
         response = await fetch("http://localhost/api/place-robot", { method: 'POST', body: JSON.stringify({ x: parseInt(robot_x), y: parseInt(robot_y), f: robot_f }) })
         return response;
     }

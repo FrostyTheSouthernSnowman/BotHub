@@ -34,14 +34,14 @@ type Robot struct {
 }
 
 //Perform is to receive a command and perform the command
-func (r *Robot) Perform(command string, x float32, y float32, f string) (float32, float32, string, error) {
+func (r *Robot) Perform(command string, x float32, y float32, z float32, f string) (float32, float32, string, error) {
 	var err error
 	var rbot_x float32
 	var rbot_y float32
 	var rbot_f string
 	switch command {
 	case "PLACE":
-		rbot_x, rbot_y, rbot_f, err = r.Place(x, y, f)
+		rbot_x, rbot_y, rbot_f, err = r.Place(x, y, z, f)
 	case "MOVE":
 		rbot_x, rbot_y, rbot_f, err = r.Move()
 	case "LEFT":
@@ -60,7 +60,7 @@ func (r *Robot) Perform(command string, x float32, y float32, f string) (float32
 }
 
 //Place will put the toy robot on the table in position X,Y and facing NORTH, SOUTH, EAST or WEST.
-func (r *Robot) Place(x float32, y float32, f string) (float32, float32, string, error) {
+func (r *Robot) Place(x float32, y float32, z float32, f string) (float32, float32, string, error) {
 	direction := strings.ToUpper(f)
 	//IF its not on the table
 	if !isStillOnTheTable(x, y, r.Table) {
@@ -71,7 +71,7 @@ func (r *Robot) Place(x float32, y float32, f string) (float32, float32, string,
 	}
 	r.Position.X = float32(x)
 	r.Position.Y = float32(y)
-	r.Position.Z = 5.0
+	r.Position.Z = float32(z)
 	r.F = direction
 	r.IsRobotPlaced = true
 	return r.Position.X, r.Position.Y, r.F, nil
