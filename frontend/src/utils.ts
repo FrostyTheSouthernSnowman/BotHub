@@ -1,4 +1,4 @@
-function if_arrow_give_name_or_return_false(object) {
+function if_arrow_give_name_or_return_false(object: any) {
     if (object.parent.name == "") {
         return false
     } else if (object.parent.name == "z_arrow") {

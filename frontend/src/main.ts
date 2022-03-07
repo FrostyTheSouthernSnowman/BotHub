@@ -9,17 +9,19 @@ topDivResizer.style.position = 'absolute';
 topDivResizer.style.right = "0";
 topDivResizer.style.bottom = "0";
 topDivResizer.style.cursor = 'se-resize';
+// @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
 topDiv.appendChild(topDivResizer);
 topDivResizer.addEventListener('mousedown', initTopResize, false);
 
-function initTopResize(e) {
+function initTopResize(e: any) {
     window.addEventListener('mousemove', topResize, false);
     window.addEventListener('mouseup', stopTopResize, false);
 }
-function topResize(e) {
+function topResize(e: any) {
+    // @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
     topDiv.style.height = (e.clientY - topDiv.offsetTop) + 'px';
 }
-function stopTopResize(e) {
+function stopTopResize(e: any) {
     window.removeEventListener('mousemove', topResize, false);
     window.removeEventListener('mouseup', stopTopResize, false);
 }
@@ -34,17 +36,19 @@ bottomDivResizer.style.position = 'absolute';
 bottomDivResizer.style.right = "0";
 bottomDivResizer.style.top = "0";
 bottomDivResizer.style.cursor = 'se-resize';
+// @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
 bottomDiv.appendChild(bottomDivResizer);
 bottomDivResizer.addEventListener('mousedown', initBottomResize, false);
 
-function initBottomResize(e) {
+function initBottomResize(e: any) {
     window.addEventListener('mousemove', bottomResize, false);
     window.addEventListener('mouseup', stopBottomResize, false);
 }
-function bottomResize(e) {
+function bottomResize(e: any) {
+    // @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
     bottomDiv.style.height = (window.innerHeight - e.clientY) + 'px';
 }
-function stopBottomResize(e) {
+function stopBottomResize(e: any) {
     window.removeEventListener('mousemove', bottomResize, false);
     window.removeEventListener('mouseup', stopBottomResize, false);
 }
@@ -59,17 +63,19 @@ rightDivResizer.style.position = 'absolute';
 rightDivResizer.style.left = "0";
 rightDivResizer.style.bottom = "0";
 rightDivResizer.style.cursor = 'se-resize';
+// @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
 rightDiv.appendChild(rightDivResizer);
 rightDivResizer.addEventListener('mousedown', initRightResize, false);
 
-function initRightResize(e) {
+function initRightResize(e: any) {
     window.addEventListener('mousemove', rightResize, false);
     window.addEventListener('mouseup', stopRightResize, false);
 }
-function rightResize(e) {
+function rightResize(e: any) {
+    // @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
     rightDiv.style.width = (window.innerWidth - e.clientX) + 'px';
 }
-function stopRightResize(e) {
+function stopRightResize(e: any) {
     window.removeEventListener('mousemove', rightResize, false);
     window.removeEventListener('mouseup', stopRightResize, false);
 }
@@ -84,66 +90,75 @@ leftDivResizer.style.position = 'absolute';
 leftDivResizer.style.right = "0";
 leftDivResizer.style.bottom = "0";
 leftDivResizer.style.cursor = 'se-resize';
+// @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
 leftDiv.appendChild(leftDivResizer);
 leftDivResizer.addEventListener('mousedown', initLeftResize, false);
 
-function initLeftResize(e) {
+function initLeftResize(e: any) {
     window.addEventListener('mousemove', leftResize, false);
     window.addEventListener('mouseup', stopLeftResize, false);
 }
-function leftResize(e) {
+function leftResize(e: any) {
+    // @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
     leftDiv.style.width = (e.clientX - leftDiv.offsetLeft) + 'px';
 }
-function stopLeftResize(e) {
+function stopLeftResize(e: any) {
     window.removeEventListener('mousemove', leftResize, false);
     window.removeEventListener('mouseup', stopLeftResize, false);
 }
 
 // Three-js stuff
+// @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
 var scene = new THREE.Scene();
+// @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
+// @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
 var renderer = new THREE.WebGLRenderer();
 
 
 // Drag robot stuff
 var directionOfDrag = false;
 
-var stuffToDrag = [];
+var stuffToDrag: any = [];
 
 var arrowHeight = 0;
 
-var intersection = null;
+var intersection: any = null;
 
 function initDragRobotAlongAxis() {
     window.addEventListener('mousemove', dragRobotAlongAxis, false);
     window.addEventListener('mouseup', stopDragRobotAlongAxis, false);
 }
-function dragRobotAlongAxis(e) {
+function dragRobotAlongAxis(e: any) {
+    // @ts-expect-error ts-migrate(2322) FIXME: Type 'string' is not assignable to type 'boolean'.
     if (directionOfDrag = "z") {
         for (let i in stuffToDrag) {
+            // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
             stuffToDrag[i].position.copy(intersection.sub(new THREE.Vector3()).applyMatrix4(new THREE.Matrix4()));
             console.log(e);
         }
+    // @ts-expect-error ts-migrate(2322) FIXME: Type 'string' is not assignable to type 'boolean'.
     } else if (directionOfDrag = "y") {
         for (let i in stuffToDrag) {
             stuffToDrag[i].position.y = ((e.clientX / window.innerWidth) * 2 - 1) - arrowHeight;
         }
+    // @ts-expect-error ts-migrate(2322) FIXME: Type 'string' is not assignable to type 'boolean'.
     } else if (directionOfDrag = "x") {
         for (let i in stuffToDrag) {
             stuffToDrag[i].position.x = ((e.clientX / window.innerWidth) * 2 - 1) - arrowHeight;
         }
     }
 }
-function stopDragRobotAlongAxis(e) {
+function stopDragRobotAlongAxis(e: any) {
     window.removeEventListener('mousemove', dragRobotAlongAxis, false);
     window.removeEventListener('mouseup', stopDragRobotAlongAxis, false);
 }
 
-var raycaster, mouse = { x: 0, y: 0 };
+var raycaster: any, mouse = { x: 0, y: 0 };
 
 
-function raycast(e) {
+function raycast(e: any) {
     // Step 1: Detect light helper
     //1. sets the mouse position with a coordinate system where the center
     //   of the screen is the origin
@@ -164,6 +179,7 @@ function raycast(e) {
         //TODO: if_arrow_give_name_or_return_false if a temporary proof-of-concept placeholder function.
         //Todo: Refactor method to return so sort of direction or vector instead of string. 
         //TODO: vector would make it simpler to process the drag-and-drop controls
+        // @ts-expect-error ts-migrate(2322) FIXME: Type 'string | boolean' is not assignable to type ... Remove this comment to see the full error message
         directionOfDrag = if_arrow_give_name_or_return_false(object)
         if (directionOfDrag !== false) {
             stuffToDrag = []
@@ -192,8 +208,11 @@ function raycast(e) {
             scene.remove(z_arrow)
         }
 
+        // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
         const x_dir = new THREE.Vector3(1, 0, 0);
+        // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
         const y_dir = new THREE.Vector3(0, 1, 0);
+        // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
         const z_dir = new THREE.Vector3(0, 0, 1);
 
         //normalize the direction vector (convert to vector of length 1)
@@ -206,8 +225,11 @@ function raycast(e) {
         const y_hex = 0x00ff00;
         const z_hex = 0x0000ff;
 
+        // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
         const x_arrowHelper = new THREE.ArrowHelper(x_dir, object.position, length, x_hex);
+        // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
         const y_arrowHelper = new THREE.ArrowHelper(y_dir, object.position, length, y_hex);
+        // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
         const z_arrowHelper = new THREE.ArrowHelper(z_dir, object.position, length, z_hex);
         x_arrowHelper.name = "x_arrow"
         y_arrowHelper.name = "y_arrow"
@@ -248,30 +270,34 @@ function raycast(e) {
 
 }
 
+// @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
 raycaster = new THREE.Raycaster();
 renderer.domElement.addEventListener('mousedown', raycast, false);
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 var table_x_and_y = prompt("Specify the length of the table in X,Y format.");
+// @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
 var table_pos = table_x_and_y.split(",");
 var table_x = table_pos[0];
 var table_y = table_pos[1];
 
 var robot_x_and_y = prompt("Where would you like to initialize the robot and where should it face? Please use the format X,Y,F where f is NORTH, EAST, SOUTH, or WEST.");
+// @ts-expect-error ts-migrate(2531) FIXME: Object is possibly 'null'.
 var robot_pos = robot_x_and_y.split(",");
 var robot_x = robot_pos[0];
 var robot_y = robot_pos[1];
 var robot_f = robot_pos[2];
 
-var objects = []
+var objects: any = []
 var robots = [];
-var robot;
+var robot: any;
 
-var streamSocket
+var streamSocket: any
 
 // Simulation stuff
 function pauseSimulation() {
@@ -286,6 +312,7 @@ function playSimulation() {
     if (streamSocket == undefined) {
         streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
 
+        // @ts-expect-error ts-migrate(7006) FIXME: Parameter 'event' implicitly has an 'any' type.
         streamSocket.onmessage = function (event) {
             let bot = JSON.parse(event.data)[0];
             robot.position.x = bot.X;
@@ -298,10 +325,13 @@ function playSimulation() {
 }
 
 async function addRobot() {
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var robot_material = new THREE.MeshBasicMaterial({
         color: "orange",
     });
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var robot = new THREE.Mesh(robot_geometry, robot_material);
     robot.position.z = 0.5;
     robots.push(robot);
@@ -310,7 +340,7 @@ async function addRobot() {
     var response = await fetch("http://localhost/api/add-robot", { method: 'POST', body: JSON.stringify(robot.position) })
 }
 
-async function initRobot(table_x, table_y, robot_x, robot_y, robot_f) {
+async function initRobot(table_x: any, table_y: any, robot_x: any, robot_y: any, robot_f: any) {
     const data = { x: parseInt(table_x), y: parseInt(table_y) }
 
     var response = await fetch("http://localhost/api/set-position", { method: 'POST', body: JSON.stringify(data) });
@@ -319,21 +349,28 @@ async function initRobot(table_x, table_y, robot_x, robot_y, robot_f) {
         return response;
     }
 }
+// @ts-expect-error ts-migrate(2532) FIXME: Object is possibly 'undefined'.
 initRobot(table_x, table_y, robot_x, robot_y, robot_f).then(response => response.json()).then(data => {
     if (!data.f) {
         return;
     }
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var geometry = new THREE.BoxGeometry(table_x, table_y, 0.01);
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var material = new THREE.MeshBasicMaterial({
         color: "grey",
     });
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var floor = new THREE.Mesh(geometry, material);
     scene.add(floor);
 
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     var robot_material = new THREE.MeshBasicMaterial({
         color: "orange",
     });
+    // @ts-expect-error ts-migrate(2304) FIXME: Cannot find name 'THREE'.
     robot = new THREE.Mesh(robot_geometry, robot_material);
     robots.push(robot)
     scene.add(robot);
