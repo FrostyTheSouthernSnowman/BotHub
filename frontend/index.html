@@ -11,9 +11,6 @@
     <title>FreeBots Robot Simulator</title>
 </head>
 <body>
-  <script src="https://threejs.org/build/three.min.js"></script>
-  <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-
   <div style="width:100%;height:50px;text-align: center; color:white;" class="ui">Robot Simulator</div>
   <div id="overlay-left">
 
@@ -28,23 +25,22 @@
   </div>
 
   <div id="overlay-top">
-    <button id="add-button" onclick="addRobot()">
+    <button id="add-button">
       <span class="material-icons">add</span>
     </button>
-    <button id="play-button" onclick="playSimulation()">
+    <button id="play-button">
       <span class="material-icons">play_arrow</span>
     </button>
-    <button id="pause-button" onclick="pauseSimulation()">
+    <button id="pause-button">
       <span class="material-icons">pause</span>
     </button>
-    <button id="reset-button" onclick="resetSimulation()">
+    <button id="reset-button">
       <span class="material-icons">undo</span>
     </button>
   </div>
   <!--button style="bottom:60%; right:15%" id="front" class="ui">Front</-button>
   <button style="bottom:55%; right:20%" id="left" class="ui">Left</button>
   <button-- style="bottom:55%; right:10%" id="right" class="ui">Right</button-->
-  <script src="utils.js"></script>
-  <script src="main.js"></script>
+  <script src="freeBots.js"></script>
 </body>
 </html>

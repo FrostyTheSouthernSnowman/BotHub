@@ -40,7 +40,7 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/stream-simulation", StreamHandler).Methods("GET")
 	r.HandleFunc("/api/add-robot", AddRobotHandler).Methods("POST")
 
-	staticFileDirectory := http.Dir("./frontend/built")
+	staticFileDirectory := http.Dir("./frontend/")
 	// Declare the handler, that routes requests to their respective filename.
 	// The fileserver is wrapped in the `stripPrefix` method, because we want to
 	// remove the "/assets/" prefix when looking for files.
@@ -164,7 +164,8 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 			Z: 0,
 		},
 	}
-	var initial_state []robot.Robot = sim_robots
+	var initial_state []robot.Robot = make([]robot.Robot, len(sim_robots))
+	copy(initial_state, sim_robots)
 
 	go ReadDataGorutine(c)
 
@@ -183,7 +184,6 @@ func StreamHandler(w http.ResponseWriter, r *http.Request) {
 				sim_json, err := json.Marshal([]physics.XYZPosition{initial_state[0].Position})
 				check(err, "marshall json")
 
-				// Main loop, send new data to the frontend
 				err = c.WriteMessage(websocket.TextMessage, sim_json)
 				if err != nil {
 					fmt.Println("error:", err)
