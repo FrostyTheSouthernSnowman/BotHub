@@ -1,9 +1,9 @@
 package main
 
 import (
-	"robot-simulator/web"
+	"robot-simulator/bothub"
 )
 
 func main() {
-	web.StartServer()
+	bothub.StartServer()
 }

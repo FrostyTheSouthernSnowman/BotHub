@@ -119,6 +119,7 @@ function stopLeftResize(e: any) {
 import * as THREE from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { if_arrow_give_name_or_return_false } from './utils';
+import { RigidBodySphereBoundingBox } from './types';
 
 var scene = new THREE.Scene();
 
@@ -278,28 +279,14 @@ document.body.appendChild(renderer.domElement);
 
 var controls = new OrbitControls(camera, renderer.domElement);
 
-var table_x_and_y = prompt("Specify the length of the table in X,Y format.");
-var table_x: number = 0;
-var table_y: number = 0;
+var table_x: number = 50;
+var table_y: number = 50;
 
-if (table_x_and_y != null) {
-    var table_pos = table_x_and_y.split(",");
-    table_x = Number(table_pos[0]);
-    table_y = Number(table_pos[1]);
-}
-
-var robot_x_and_y = prompt("Where would you like to initialize the robot and where should it face? Please use the format X,Y,F where f is NORTH, EAST, SOUTH, or WEST.");
 var robot_x: number = 0;
 var robot_y: number = 0;
-var robot_f: string = "";
-if (robot_x_and_y != null) {
-    var robot_pos = robot_x_and_y.split(",");
-    robot_x = Number(robot_pos[0]);
-    robot_y = Number(robot_pos[1]);
-    robot_f = robot_pos[2];
-}
+
 var objects: any = []
-var robots = [];
+var robots: any[] = [];
 var robot: any;
 
 var streamSocket: any
@@ -323,7 +310,6 @@ function playSimulation() {
 
         streamSocket.onmessage = function (event: EventType) {
             let bot = JSON.parse(event.data)[0];
-            console.log(bot)
             robot.position.x = bot.X;
             robot.position.y = bot.Y;
             robot.position.z = bot.Z;
@@ -343,7 +329,7 @@ async function addRobot() {
     robots.push(robot);
     objects.push(robot)
     scene.add(robot);
-    var response = await fetch("http://localhost/api/add-robot", { method: 'POST', body: JSON.stringify(robot.position) })
+    var response = await fetch("http://localhost/api/v0-deprecated/add-robot", { method: 'POST', body: JSON.stringify(robot.position) })
 }
 
 document.querySelector('#add-button')!.addEventListener('click', (e:Event) => addRobot());
@@ -351,22 +337,9 @@ document.querySelector('#play-button')!.addEventListener('click', (e:Event) => p
 document.querySelector('#pause-button')!.addEventListener('click', (e:Event) => pauseSimulation());
 document.querySelector('#reset-button')!.addEventListener('click', (e:Event) => resetSimulation());
 
-async function initRobot(table_x:number, table_y:number, robot_x:number, robot_y:number, robot_f: string): Promise<Response | undefined> {
-    const data = { x: table_x, y: table_y }
+var scene_has_initialized: boolean = false
 
-    var response = await fetch("http://localhost/api/set-position", { method: 'POST', body: JSON.stringify(data) });
-    if (response.status == 200) {
-        response = await fetch("http://localhost/api/place-robot", { method: 'POST', body: JSON.stringify({ x: robot_x, y: robot_y, f: robot_f }) })
-        if (response != undefined) {
-            var jsonData = await response.json();
-            return jsonData;
-        }
-    }
-}
-initRobot(table_x, table_y, robot_x, robot_y, robot_f).then((data: any) => {
-    if (!data.f) {
-        return;
-    }
+function initializeScene(data: any) {
     var geometry = new THREE.BoxGeometry(table_x, table_y, 0.01);
     var material = new THREE.MeshBasicMaterial({
         color: "grey",
@@ -374,7 +347,7 @@ initRobot(table_x, table_y, robot_x, robot_y, robot_f).then((data: any) => {
     var floor = new THREE.Mesh(geometry, material);
     scene.add(floor)
 
-    var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
+    var robot_geometry = new THREE.SphereGeometry(1);
     var robot_material = new THREE.MeshBasicMaterial({
         color: "orange",
     });
@@ -386,9 +359,10 @@ initRobot(table_x, table_y, robot_x, robot_y, robot_f).then((data: any) => {
     camera.position.z = 2;
     camera.position.x = 0;
     camera.rotation.x = 1;
-    robot.position.z = 1.00;
-    robot.position.y = data.y;
-    robot.position.x = data.x;
+    robot.position.z = data[0].position.z;
+    robot.position.y = data[0].position.y;
+    robot.position.x = data[0].position.x;
+    scene_has_initialized = true
 
     var animate = function () {
         requestAnimationFrame(animate);
@@ -396,4 +370,28 @@ initRobot(table_x, table_y, robot_x, robot_y, robot_f).then((data: any) => {
     };
 
     animate();
-})
+}
+
+function initRobot(): void {
+    streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
+
+    type EventType = {
+        data: string
+    }
+
+    streamSocket.onmessage = function (event: EventType) {
+        let data: RigidBodySphereBoundingBox[] = JSON.parse(event.data.toLowerCase())
+        if (!scene_has_initialized) {
+            initializeScene(data)
+
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                robots[i].position.x = data[i].position.x
+                robots[i].position.y = data[i].position.y
+                robots[i].position.z = data[i].position.z
+            }
+        }
+    }
+}
+
+initRobot()
