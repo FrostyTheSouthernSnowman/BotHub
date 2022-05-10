@@ -19,11 +19,28 @@ type Vector3 struct {
 	Z float32
 }
 
+type Message struct {
+	Type string `json:"type"`
+}
+
+var messages [1]Message
+
 type RigidBodySphereBoundingBox struct {
 	Position Vector3
 	Velocity Vector3
 	Mass     float32
 	Radius   float32
+}
+
+func ReadDataGorutine(c *websocket.Conn) {
+	for {
+		var message Message
+		err := c.ReadJSON(&message)
+		if err != nil {
+			break
+		}
+		messages[0] = message
+	}
 }
 
 // Global array of particles.
@@ -72,7 +89,10 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 	var dt float32 = 0.03333333333333333 // FPS raised to -1
 
 	InitializeObjects()
+	initial_simulation_state := simulation_objects
 	PrintObjects()
+
+	go ReadDataGorutine(c)
 
 	for currentTime < totalSimulationTime {
 		// We're sleeping here to keep things simple. In real applications you'd use some
@@ -83,15 +103,24 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 		// previousTime = currentTime
 		time.Sleep(time.Duration(dt*1000) * time.Millisecond)
 
-		for i := 0; i < num_objects; i++ {
-			json_formatted_sim, err := json.Marshal(simulation_objects)
+		if messages[0].Type == "pause" {
+			for {
+				if messages[0].Type == "play" {
+					break
+				} else if messages[0].Type == "reset" {
+					simulation_objects = initial_simulation_state
+					json_formatted_sim, err := json.Marshal(simulation_objects)
 
-			err = c.WriteMessage(websocket.TextMessage, json_formatted_sim)
-			if err != nil {
-				fmt.Println("error:", err)
-				return
+					err = c.WriteMessage(websocket.TextMessage, json_formatted_sim)
+					if err != nil {
+						fmt.Println("error:", err)
+						return
+					}
+				}
 			}
+		}
 
+		for i := 0; i < num_objects; i++ {
 			var object *RigidBodySphereBoundingBox = &simulation_objects[i]
 			var force Vector3 = AddGravity(object)
 			var acceleration Vector3 = Vector3{force.X / object.Mass, force.Y / object.Mass, force.Z / object.Mass}
@@ -145,6 +174,14 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 					fmt.Println("Object 2 position:", object2.Position)
 				}
 			}
+		}
+
+		json_formatted_sim, err := json.Marshal(simulation_objects)
+
+		err = c.WriteMessage(websocket.TextMessage, json_formatted_sim)
+		if err != nil {
+			fmt.Println("error:", err)
+			return
 		}
 	}
 }

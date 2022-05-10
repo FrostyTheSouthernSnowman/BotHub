@@ -302,18 +302,7 @@ function resetSimulation() {
 
 function playSimulation() {
     if (streamSocket == undefined) {
-        streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
-
-        type EventType = {
-            data: string
-        }
-
-        streamSocket.onmessage = function (event: EventType) {
-            let bot = JSON.parse(event.data)[0];
-            robot.position.x = bot.X;
-            robot.position.y = bot.Y;
-            robot.position.z = bot.Z;
-        }
+        initRobot()
     } else {
         streamSocket.send(JSON.stringify({ type: "play" }));
     }
@@ -393,5 +382,3 @@ function initRobot(): void {
         }
     }
 }
-
-initRobot()
