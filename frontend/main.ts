@@ -277,19 +277,14 @@ renderer.domElement.addEventListener('mousedown', raycast, false);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-var controls = new OrbitControls(camera, renderer.domElement);
-
 var table_x: number = 50;
 var table_y: number = 50;
-
-var robot_x: number = 0;
-var robot_y: number = 0;
 
 var objects: any = []
 var robots: any[] = [];
 var robot: any;
 
-var streamSocket: any
+var streamSocket: WebSocket
 
 // Simulation stuff
 function pauseSimulation() {
@@ -301,15 +296,13 @@ function resetSimulation() {
 }
 
 function playSimulation() {
-    if (streamSocket == undefined) {
-        initRobot()
-    } else {
-        streamSocket.send(JSON.stringify({ type: "play" }));
-    }
+    streamSocket.send(JSON.stringify({ type: "play" }));
 }
 
 async function addRobot() {
-    var robot_geometry = new THREE.BoxGeometry(1, 1, 1);
+    streamSocket.send(JSON.stringify({type: "addObject"}))
+    console.log("new object added")
+    var robot_geometry = new THREE.SphereGeometry(1);
     var robot_material = new THREE.MeshBasicMaterial({
         color: "orange",
     });
@@ -318,7 +311,6 @@ async function addRobot() {
     robots.push(robot);
     objects.push(robot)
     scene.add(robot);
-    var response = await fetch("http://localhost/api/v0-deprecated/add-robot", { method: 'POST', body: JSON.stringify(robot.position) })
 }
 
 document.querySelector('#add-button')!.addEventListener('click', (e:Event) => addRobot());
@@ -382,3 +374,5 @@ function initRobot(): void {
         }
     }
 }
+
+initRobot()

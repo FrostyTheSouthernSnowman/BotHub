@@ -300,7 +300,8 @@
     "yargs-parser": "^18.1.3"
   },
   "scripts": {
-    "build": "rimraf freeBots.js && webpack"
+    "build": "rimraf freeBots.js && webpack",
+    "dev": "rimraf freeBots.js && webpack watch"
   },
   "keywords": [],
   "author": "",

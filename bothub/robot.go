@@ -11,7 +11,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const num_objects int = 1
+var num_objects int = 1
+
+var addObject bool = false
 
 type Vector3 struct {
 	X float32
@@ -39,12 +41,17 @@ func ReadDataGorutine(c *websocket.Conn) {
 		if err != nil {
 			break
 		}
-		messages[0] = message
+
+		if message.Type == "addObject" {
+			addObject = true
+		} else {
+			messages[0] = message
+		}
 	}
 }
 
 // Global array of particles.
-var simulation_objects [num_objects]RigidBodySphereBoundingBox
+var simulation_objects []RigidBodySphereBoundingBox
 
 const floor_height = 0
 
@@ -63,12 +70,18 @@ func PrintObjects() {
 //! This method will be removed in the near future
 // TODO: Rewrite this function to initialize objects that aren't sphere and change the defaults to something specified by the user
 func InitializeObjects() {
+	num_objects = 1
+	simulation_objects = nil
 	for i := 0; i < num_objects; i++ {
-		simulation_objects[i].Position = Vector3{float32(rand.Intn(50)), float32(rand.Intn(50)), float32(rand.Intn(50))}
-		simulation_objects[i].Velocity = Vector3{float32(rand.Intn(20)), float32(rand.Intn(20)), 0}
-		simulation_objects[i].Mass = 1
-		simulation_objects[i].Radius = 1
+		var new_object = RigidBodySphereBoundingBox{
+			Position: Vector3{float32(rand.Intn(50)), float32(rand.Intn(50)), float32(rand.Intn(50))},
+			Velocity: Vector3{float32(rand.Intn(20)), float32(rand.Intn(20)), 0},
+			Mass:     1,
+			Radius:   1,
+		}
+		simulation_objects = append(simulation_objects, new_object)
 	}
+	addObject = false
 }
 
 // Just applies Earth's gravity force (mass times gravity acceleration 9.81 m/s^2) to each particle.
@@ -83,18 +96,61 @@ func CheckIfCollisionOccurred(object1 *RigidBodySphereBoundingBox, object2 *Rigi
 	return false
 }
 
+func AddObject(initial_state []RigidBodySphereBoundingBox, c *websocket.Conn) []RigidBodySphereBoundingBox {
+	new_object := RigidBodySphereBoundingBox{
+		Position: Vector3{
+			X: float32(rand.Intn(50)),
+			Y: float32(rand.Intn(50)),
+			Z: float32(rand.Intn(50)),
+		},
+		Velocity: Vector3{
+			X: float32(rand.Intn(50)),
+			Y: float32(rand.Intn(50)),
+			Z: 0,
+		},
+		Mass:   1,
+		Radius: 1,
+	}
+
+	simulation_objects = append(simulation_objects, new_object)
+	initial_state = append(initial_state, new_object)
+	num_objects++
+
+	json_formatted_sim, err := json.Marshal(simulation_objects)
+
+	check(err, "could not marshall simulation_objects to JSON when trying to add a new object")
+
+	err = c.WriteMessage(websocket.TextMessage, json_formatted_sim)
+	if err != nil {
+		fmt.Println("error:", err)
+		return initial_state
+	}
+	addObject = false
+	return initial_state
+}
+
 func RunSimulation(c *websocket.Conn, r *http.Request) {
-	var totalSimulationTime float32 = 60 // The simulation will run for 10 seconds.
-	var currentTime float32 = 0          // This accumulates the time that has passed.
 	var dt float32 = 0.03333333333333333 // FPS raised to -1
+	messages[0] = Message{
+		Type: "pause",
+	}
 
 	InitializeObjects()
-	initial_simulation_state := simulation_objects
+	initial_simulation_state := make([]RigidBodySphereBoundingBox, len(simulation_objects))
+	copy(initial_simulation_state, simulation_objects)
 	PrintObjects()
+
+	json_formatted_sim, err := json.Marshal(simulation_objects)
+
+	err = c.WriteMessage(websocket.TextMessage, json_formatted_sim)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
 
 	go ReadDataGorutine(c)
 
-	for currentTime < totalSimulationTime {
+	for {
 		// We're sleeping here to keep things simple. In real applications you'd use some
 		// timing API to get the current time in milliseconds and compute dt in the beginning
 		// of every iteration like this:
@@ -103,18 +159,29 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 		// previousTime = currentTime
 		time.Sleep(time.Duration(dt*1000) * time.Millisecond)
 
+		if addObject {
+			initial_simulation_state = AddObject(initial_simulation_state, c)
+		}
+
 		if messages[0].Type == "pause" {
 			for {
+				if addObject {
+					initial_simulation_state = AddObject(initial_simulation_state, c)
+				}
+
 				if messages[0].Type == "play" {
 					break
 				} else if messages[0].Type == "reset" {
-					simulation_objects = initial_simulation_state
+					copy(simulation_objects, initial_simulation_state)
 					json_formatted_sim, err := json.Marshal(simulation_objects)
 
 					err = c.WriteMessage(websocket.TextMessage, json_formatted_sim)
 					if err != nil {
 						fmt.Println("error:", err)
 						return
+					}
+					messages[0] = Message{
+						Type: "pause",
 					}
 				}
 			}
@@ -154,7 +221,6 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 			}
 
 			PrintObjects()
-			currentTime += dt
 		}
 
 		for i := 0; i < num_objects; i++ {
@@ -169,9 +235,6 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 				var object2 *RigidBodySphereBoundingBox = &simulation_objects[i2]
 				if CheckIfCollisionOccurred(object1, object2) {
 					fmt.Println("A collission occurred!")
-					fmt.Println("Distance:", ThreeDimensionalEuclidianDistance(object1.Position, object2.Position))
-					fmt.Println("Object 1 position:", object1.Position)
-					fmt.Println("Object 2 position:", object2.Position)
 				}
 			}
 		}
