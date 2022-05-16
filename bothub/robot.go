@@ -3,7 +3,6 @@ package bothub
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"math/rand"
 	"net/http"
 	"time"
@@ -27,7 +26,6 @@ type RigidBodySphereBoundingBox struct {
 	Mass     float64
 	Radius   float64
 }
-}
 
 func ReadDataGorutine(c *websocket.Conn) {
 	for {
@@ -49,8 +47,6 @@ func ReadDataGorutine(c *websocket.Conn) {
 var simulation_objects []RigidBodySphereBoundingBox
 
 const floor_height = 0
-
-}
 
 func PrintObjects() {
 	for i := 0; i < num_objects; i++ {
