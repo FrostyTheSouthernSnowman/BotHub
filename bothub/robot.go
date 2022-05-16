@@ -15,12 +15,6 @@ var num_objects int = 1
 
 var addObject bool = false
 
-type Vector3 struct {
-	X float32
-	Y float32
-	Z float32
-}
-
 type Message struct {
 	Type string `json:"type"`
 }
@@ -30,8 +24,9 @@ var messages [1]Message
 type RigidBodySphereBoundingBox struct {
 	Position Vector3
 	Velocity Vector3
-	Mass     float32
-	Radius   float32
+	Mass     float64
+	Radius   float64
+}
 }
 
 func ReadDataGorutine(c *websocket.Conn) {
@@ -55,8 +50,6 @@ var simulation_objects []RigidBodySphereBoundingBox
 
 const floor_height = 0
 
-func ThreeDimensionalEuclidianDistance(point1 Vector3, point2 Vector3) float32 {
-	return float32(math.Sqrt(float64(math.Pow(float64(point1.X-point2.X), 2) + math.Pow(float64(point1.Y-point2.Y), 2) + math.Pow(float64(point1.Z-point2.Z), 2))))
 }
 
 func PrintObjects() {
@@ -74,8 +67,8 @@ func InitializeObjects() {
 	simulation_objects = nil
 	for i := 0; i < num_objects; i++ {
 		var new_object = RigidBodySphereBoundingBox{
-			Position: Vector3{float32(rand.Intn(50)), float32(rand.Intn(50)), float32(rand.Intn(50))},
-			Velocity: Vector3{float32(rand.Intn(20)), float32(rand.Intn(20)), 0},
+			Position: Vector3{float64(rand.Intn(50)), float64(rand.Intn(50)), float64(rand.Intn(50))},
+			Velocity: Vector3{float64(rand.Intn(20)), float64(rand.Intn(20)), 0},
 			Mass:     1,
 			Radius:   1,
 		}
@@ -99,13 +92,13 @@ func CheckIfCollisionOccurred(object1 *RigidBodySphereBoundingBox, object2 *Rigi
 func AddObject(initial_state []RigidBodySphereBoundingBox, c *websocket.Conn) []RigidBodySphereBoundingBox {
 	new_object := RigidBodySphereBoundingBox{
 		Position: Vector3{
-			X: float32(rand.Intn(50)),
-			Y: float32(rand.Intn(50)),
-			Z: float32(rand.Intn(50)),
+			X: float64(rand.Intn(50)),
+			Y: float64(rand.Intn(50)),
+			Z: float64(rand.Intn(50)),
 		},
 		Velocity: Vector3{
-			X: float32(rand.Intn(50)),
-			Y: float32(rand.Intn(50)),
+			X: float64(rand.Intn(50)),
+			Y: float64(rand.Intn(50)),
 			Z: 0,
 		},
 		Mass:   1,
@@ -130,7 +123,7 @@ func AddObject(initial_state []RigidBodySphereBoundingBox, c *websocket.Conn) []
 }
 
 func RunSimulation(c *websocket.Conn, r *http.Request) {
-	var dt float32 = 0.03333333333333333 // FPS raised to -1
+	var dt float64 = 0.03333333333333333 // FPS raised to -1
 	messages[0] = Message{
 		Type: "pause",
 	}
@@ -235,6 +228,7 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 				var object2 *RigidBodySphereBoundingBox = &simulation_objects[i2]
 				if CheckIfCollisionOccurred(object1, object2) {
 					fmt.Println("A collission occurred!")
+
 				}
 			}
 		}
