@@ -215,12 +215,7 @@ func RunSimulation(c *websocket.Conn, r *http.Request) {
 		for i := 0; i < num_objects; i++ {
 
 			var object1 *RigidBodySphereBoundingBox = &simulation_objects[i]
-
-			for i2 := 0; i2 < num_objects; i2++ {
-				if i2 == i {
-					continue
-				}
-
+			for i2 := i + 1; i2 < num_objects; i2++ {
 				var object2 *RigidBodySphereBoundingBox = &simulation_objects[i2]
 				if CheckIfCollisionOccurred(object1, object2) {
 					fmt.Println("A collission occurred!")
