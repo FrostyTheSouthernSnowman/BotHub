@@ -4,11 +4,18 @@ interface Vector3 {
     z: number
 }
 
-interface RigidBodySphereBoundingBox {
-    position: Vector3
-    velocity: Vector3
-    mass: number
-    radius: number
+interface Point {
+	position:              Vector3
+	velocity:              Vector3
+	bounciness:            number
+	pinned:                boolean
+	positionReset:         Vector3
 }
 
-export {Vector3, RigidBodySphereBoundingBox}
+interface Stick {
+    a: Point
+    b: Point
+    size: Point
+}
+
+export {Vector3, Point, Stick}

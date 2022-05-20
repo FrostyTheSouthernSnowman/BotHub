@@ -119,7 +119,8 @@ function stopLeftResize(e: any) {
 import * as THREE from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { if_arrow_give_name_or_return_false } from './utils';
-import { RigidBodySphereBoundingBox } from './types';
+import { Stick, Point } from './types';
+import { Vector3 } from 'three';
 
 var scene = new THREE.Scene();
 
@@ -279,8 +280,8 @@ document.body.appendChild(renderer.domElement);
 
 var controls = new OrbitControls(camera, renderer.domElement);
 
-var table_x: number = 50;
-var table_y: number = 50;
+var table_x: number = 250;
+var table_y: number = 250;
 
 var objects: any = []
 var robots: any[] = [];
@@ -322,59 +323,78 @@ document.querySelector('#reset-button')!.addEventListener('click', (e:Event) => 
 
 var scene_has_initialized: boolean = false
 
-function initializeScene(data: any) {
-    var geometry = new THREE.BoxGeometry(table_x, table_y, 0.01);
-    var material = new THREE.MeshBasicMaterial({
-        color: "grey",
-    });
-    var floor = new THREE.Mesh(geometry, material);
-    scene.add(floor)
+var positions: Vector3[][] = [];
+var lines: THREE.Line[] = [];
 
-    var robot_geometry = new THREE.SphereGeometry(1);
-    var robot_material = new THREE.MeshBasicMaterial({
-        color: "orange",
-    });
-    robot = new THREE.Mesh(robot_geometry, robot_material);
-    robots.push(robot)
-    scene.add(robot);
-
-    camera.position.y = -5;
-    camera.position.z = 2;
-    camera.position.x = 0;
-    camera.rotation.x = 1;
-    robot.position.z = data[0].position.z;
-    robot.position.y = data[0].position.y;
-    robot.position.x = data[0].position.x;
-    scene_has_initialized = true
-
-    var animate = function () {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-    };
-
-    animate();
-}
-
-function initRobot(): void {
+function initSimulation() {
     streamSocket = new WebSocket("ws://localhost/api/stream-simulation");
 
     type EventType = {
         data: string
     }
 
+    var animate = function () {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    };
+
+    var geometry = new THREE.BoxGeometry(table_x, table_y, 0.01);
+    var floor_material = new THREE.MeshBasicMaterial({
+        color: "grey",
+    });
+    var floor = new THREE.Mesh(geometry, floor_material);
+
+    camera.position.x = 6
+    camera.position.y = -205
+    camera.position.z = 145
+    camera.rotation.x = 1
+
+    scene.add(floor)
+
+    animate()
+
+    const material = new THREE.LineBasicMaterial( { color: 0xffffff } )
+
     streamSocket.onmessage = function (event: EventType) {
-        let data: RigidBodySphereBoundingBox[] = JSON.parse(event.data.toLowerCase())
+        let data: Stick[] = JSON.parse(event.data.toLowerCase())
+
         if (!scene_has_initialized) {
-            initializeScene(data)
+            for (var i = 0; i < data.length; i++) {
+                positions.push([new THREE.Vector3(data[i].a.position.x, data[i].a.position.y, data[i].a.position.z), new THREE.Vector3(data[i].b.position.x, data[i].b.position.y, data[i].b.position.z)])
+            }
+
+            for (var i = 0; i < positions.length; i++) {
+                const geometry = new THREE.BufferGeometry().setFromPoints( positions[i] )
+
+                const line = new THREE.Line( geometry, material );
+
+                scene.add( line );
+                lines.push(line)
+            }
+            renderer.render(scene, camera)
+
+            scene_has_initialized = true
 
         } else {
-            for (let i = 0; i < data.length; i++) {
-                robots[i].position.x = data[i].position.x
-                robots[i].position.y = data[i].position.y
-                robots[i].position.z = data[i].position.z
+            for (var i = 0; i < data.length; i++) {
+                // @ts-ignore
+                lines[i].geometry.attributes.position.array[0] = data[i].a.position.x
+                // @ts-ignore
+                lines[i].geometry.attributes.position.array[1] = data[i].a.position.y
+                // @ts-ignore
+                lines[i].geometry.attributes.position.array[2] = data[i].a.position.z
+
+                // @ts-ignore
+                lines[i].geometry.attributes.position.array[3] = data[i].b.position.x
+                // @ts-ignore
+                lines[i].geometry.attributes.position.array[4] = data[i].b.position.y
+                // @ts-ignore
+                lines[i].geometry.attributes.position.array[5] = data[i].b.position.z
+                lines[i].geometry.attributes.position.needsUpdate = true
             }
         }
-    }
+        console.log(data[0].a.velocity)
+    }   
 }
 
-initRobot()
+initSimulation()

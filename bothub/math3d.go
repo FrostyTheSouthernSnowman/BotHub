@@ -18,13 +18,19 @@ func (vector Vector3) Add(other Vector3) Vector3 {
 	}
 }
 
-func (vector *Vector3) Scale(n float64) Vector3 {
-	*vector = Vector3{
-		X: vector.X * n,
-		Y: vector.Y * n,
-		Z: vector.Z * n,
+func (vector Vector3) Sub(other Vector3) Vector3 {
+	return Vector3{
+		X: vector.X - other.X,
+		Y: vector.Y - other.Y,
+		Z: vector.Z - other.Z,
 	}
-	return *vector
+}
+
+func (vector Vector3) Scale(n float64) Vector3 {
+	vector.X *= n
+	vector.Y *= n
+	vector.Z *= n
+	return vector
 }
 
 func (vector Vector3) Length() float64 {

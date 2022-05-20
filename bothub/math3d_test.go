@@ -13,7 +13,7 @@ func TestScale(t *testing.T) {
 		Y: 2,
 		Z: 3,
 	}
-	v.Scale(2)
+	v = v.Scale(2)
 	v2 := Vector3{
 		X: 2,
 		Y: 4,
@@ -44,6 +44,29 @@ func TestAddVectors(t *testing.T) {
 
 	if sum != v3 {
 		t.Fatalf("sum: %v, correct: %v", sum, v3)
+	}
+}
+
+func TestSubtractVectors(t *testing.T) {
+	v1 := Vector3{
+		X: 1,
+		Y: 2,
+		Z: 3,
+	}
+	v2 := Vector3{
+		X: 2,
+		Y: 4,
+		Z: 6,
+	}
+	v3 := Vector3{
+		X: 1,
+		Y: 2,
+		Z: 3,
+	}
+	diff := v2.Sub(v1)
+
+	if diff != v3 {
+		t.Fatalf("sum: %v, correct: %v", diff, v3)
 	}
 }
 
