@@ -393,7 +393,6 @@ function initSimulation() {
                 lines[i].geometry.attributes.position.needsUpdate = true
             }
         }
-        console.log(data[0].a.velocity)
     }   
 }
 
