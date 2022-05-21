@@ -85,3 +85,30 @@ func MakeCube(side float64, center Vector3) ([]*Stick, []*Point) {
 	return sticks, points
 }
 
+func MakeSphere(radius float64, center Vector3) ([]*Stick, []*Point) {
+	stride := (2 * math.Pi) / 10 * radius
+
+	var points []*Point
+	var sticks []*Stick
+
+	// 20 * radius * 0.5 = 10 * radius
+	for i := 0.0; i < 10*radius; i++ {
+		theta := i * stride
+
+		point1 := MakePoint(Vector3{center.X + math.Cos(theta)*radius, 0, center.Z + math.Sin(theta)*radius}, 0.9, 0.99)
+		point2 := MakePoint(Vector3{center.X - math.Cos(theta)*radius, 0, center.Z - math.Sin(theta)*radius}, 0.9, 0.99)
+
+		points = append(points, &point1)
+		points = append(points, &point2)
+
+		stick := MakeStick(&point1, &point2)
+		sticks = append(sticks, &stick)
+	}
+
+	for i := 0; i < len(points); i++ {
+		outer_stick := MakeStick(points[i], points[(i+2)%len(points)])
+		sticks = append(sticks, &outer_stick)
+	}
+
+	return sticks, points
+}
